@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import history_table with context %}
+{% block title %}Scan{% endblock %}
+{% block crumb %}Scan{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='scan.js') }}" defer></script>{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Staff dashboard</h1><p class="sub">Scan a teacher's QR code to record Time In and monitor rooms in use.</p></div>
+</div>
+<div class="stats">
+  <div class="card stat"><div><strong>{{ in_use|length }}</strong><span>Rooms in use now</span></div></div>
+  <div class="card stat"><div><strong>{{ today_count }}</strong><span>Scans today</span></div></div>
+</div>
+<div class="cols">
+  <section class="card no-print">
+    <h2>Scan QR code</h2>
+    <video id="scanVideo" hidden playsinline muted style="width:100%;border-radius:12px;margin-bottom:.75rem;background:#000"></video>
+    <div class="btn-row" style="margin-bottom:.75rem">
+      <button class="btn" type="button" id="scanStart">Start camera</button>
+    </div>
+    <label class="field">Or choose a photo of the QR code
+      <input type="file" id="scanFile" accept="image/*" capture="environment">
+    </label>
+    <p class="sub" id="scanNote"></p>
+    <form method="post" action="{{ url_for('staff_scan') }}" class="stack" id="scanForm">
+      <label class="field">Or enter the code manually
+        <div style="display:flex;gap:.5rem"><input name="token" id="scanToken" placeholder="Paste the QR code text" autocomplete="off" required><button class="btn" type="submit">Submit</button></div>
+      </label>
+    </form>
+  </section>
+  <section class="card">
+    <h2 class="live">Rooms in use</h2>
+    {% if in_use %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Room</th><th>Teacher</th><th>Since</th><th>Elapsed</th></tr></thead>
+      <tbody>{% for a in in_use %}<tr><td>{{ a.room_name }}</td><td>{{ a.teacher_name }}</td><td>{{ a.time_in_text }}</td><td>{{ a.elapsed_text }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty"><b>All rooms are free</b>No class is in session right now.</div>{% endif %}
+  </section>
+</div>
+<section class="card" style="margin-top:1.25rem">
+  <div class="card-head"><h2>Today's scans</h2><a class="btn ghost sm" href="{{ url_for('history') }}">Full history</a></div>
+  {% set f = {'sort': 'time', 'dir': 'desc'} %}
+  {{ history_table(recent, f, true, false) }}
+</section>
+{% endblock %}

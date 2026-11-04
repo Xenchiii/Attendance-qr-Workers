@@ -1,0 +1,9 @@
+{
+  "name": "qr-attendance-worker",
+  "private": true,
+  "scripts": {
+    "build": "python3 tools/build_templates.py",
+    "dev": "uv run pywrangler dev",
+    "deploy": "python3 tools/build_templates.py && uv run pywrangler deploy"
+  }
+}

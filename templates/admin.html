@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import history_table, confirm with context %}
+{% block title %}Overview{% endblock %}
+{% block crumb %}Overview{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Administrator overview</h1><p class="sub">A live look at attendance, rooms and accounts.</p></div>
+  <div class="btn-row"><a class="btn ghost" href="{{ url_for('admin_reports') }}">Open reports</a><a class="btn" href="{{ url_for('admin_users') }}">Manage users</a></div>
+</div>
+<div class="stats">
+  <div class="card stat"><div><strong>{{ stats.teachers }}</strong><span>Teachers</span></div></div>
+  <div class="card stat"><div><strong>{{ stats.staff }}</strong><span>Staff</span></div></div>
+  <div class="card stat"><div><strong>{{ stats.pending }}</strong><span>Pending approval</span></div></div>
+  <div class="card stat"><div><strong>{{ stats.in_use }}</strong><span>Rooms in use</span></div></div>
+  <div class="card stat"><div><strong>{{ stats.today }}</strong><span>Records today</span></div></div>
+</div>
+<div class="grid2">
+  <section class="card">
+    <div class="card-head"><h2>Records, last 7 days</h2><span class="hint">{{ week_total }} total</span></div>
+    <div class="bars" role="img" aria-label="Attendance records per day for the last seven days">
+      {% for d in chart %}
+      <div class="bar-col {{ 'today' if d.today }}" title="{{ d.date }}: {{ d.n }}">
+        <div class="track" style="--h:{{ d.h }}%"><i style="animation-delay:{{ loop.index0 * 0.07 }}s"></i><b>{{ d.n }}</b></div>
+        <small>{{ d.label }}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Busiest rooms, 30 days</h2></div>
+    {% if rooms %}
+    <div class="hbars">
+      {% for r in rooms %}
+      <div class="hbar"><span>{{ r.name }}</span><div class="t"><i style="--w:{{ r.w }}%;animation-delay:{{ loop.index0 * 0.08 }}s"></i></div><em>{{ r.n }} classes, {{ r.time }}</em></div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty"><b>No data yet</b>Room usage appears once classes are recorded.</div>{% endif %}
+  </section>
+</div>
+<div class="grid2">
+  <section class="card">
+    <div class="card-head"><h2 class="live">Active now</h2></div>
+    {% if active %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Teacher</th><th>Room</th><th>Elapsed</th><th class="no-print"></th></tr></thead>
+      <tbody>
+      {% for a in active %}
+      <tr><td>{{ a.teacher_name }}</td><td>{{ a.room_name }}</td><td>{{ a.elapsed_text }}</td>
+      <td class="no-print">{{ confirm('close-' ~ a.id, 'Close', 'Close this record?', a.teacher_name ~ ' will be marked incomplete and ' ~ a.room_name ~ ' becomes available again.', url_for('admin_close', attendance_id=a.id), 'Close record', 'warn', {}) }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty"><b>No class in session</b>Every room is free.</div>{% endif %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Waiting for approval</h2><a class="btn ghost sm" href="{{ url_for('admin_users', status='INACTIVE') }}">See all</a></div>
+    {% if pending %}
+    <div class="table-wrap"><table>
+      <tbody>
+      {% for u in pending %}
+      <tr>
+        <td><div class="cell-user"><span class="avatar">{{ u.initials }}</span><div>{{ u.full_name }}<small>{{ u.email }}</small></div></div></td>
+        <td>{{ u.role|capitalize }}</td>
+        <td><form method="post" action="{{ url_for('admin_status', user_id=u.id) }}" class="inline"><input type="hidden" name="status" value="ACTIVE"><input type="hidden" name="next" value="{{ url_for('admin') }}"><button class="btn ok sm" type="submit">Approve</button></form></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty"><b>Nothing waiting</b>All sign-ups are handled.</div>{% endif %}
+  </section>
+</div>
+<section class="card">
+  <div class="card-head"><h2>Recent activity</h2><a class="btn ghost sm" href="{{ url_for('admin_reports') }}">All records</a></div>
+  {% if recent %}
+  <ul class="feed">
+    {% for a in recent %}
+    <li>
+      <span class="dot {{ 'done' if a.status == 'COMPLETED' else ('warn' if a.status == 'INCOMPLETE' else '') }}"></span>
+      <div><b>{{ a.teacher_name }}</b> in {{ a.room_name }}<small>{{ a.time_in_text }}{% if a.status != 'ACTIVE' %} to {{ a.time_out_text }}{% endif %}</small></div>
+      <span class="badge {{ a.status }}">{{ a.status|pretty }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<div class="empty"><b>No activity yet</b>Records show up here as teachers time in.</div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<main class="auth" id="main">
+  <aside class="auth-side">
+    <div class="blocks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <svg class="hero-logo" viewBox="0 0 238 238" aria-hidden="true">
+      <rect x="0" y="0" width="100" height="100" rx="22" fill="#e8f0fd"/>
+      <rect x="138" y="0" width="100" height="100" rx="22" fill="#6fa3ef"/>
+      <rect x="0" y="138" width="100" height="100" rx="22" fill="#6fa3ef"/>
+      <rect x="138" y="138" width="46" height="46" rx="12" fill="#e8f0fd"/>
+      <rect x="192" y="192" width="46" height="46" rx="12" fill="#e8f0fd"/>
+    </svg>
+    <div class="brand light"><img class="logo" src="{{ url_for('static', filename='img/logo-mark-128.png') }}" alt="">QR Attendance</div>
+    <h1>Teacher attendance and room monitoring</h1>
+    <ul>
+      <li><span>Teachers generate a short-lived QR code for the room they are using.</span></li>
+      <li><span>Staff scan the code to record Time In, and teachers press Time Out when class ends.</span></li>
+      <li><span>Administrators manage accounts and rooms, and review, filter and export attendance reports.</span></li>
+    </ul>
+  </aside>
+  <section class="auth-main">
+    <form class="theme-corner" method="post" action="{{ url_for('theme') }}">
+      <input type="hidden" name="mode" value="cycle">
+      <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+      <button class="theme-btn" type="submit">Theme: {{ 'Auto' if theme == 'system' else theme|capitalize }}</button>
+    </form>
+    <div class="auth-card">
+      <h1><img src="{{ url_for('static', filename='img/logo-mark-128.png') }}" alt="">Welcome</h1>
+      <p class="sub">Sign in or create an account to continue.</p>
+      <div class="tabs">
+        <a href="{{ url_for('index') }}" class="{{ 'on' if mode == 'login' }}">Log in</a>
+        <a href="{{ url_for('index', mode='signup') }}" class="{{ 'on' if mode == 'signup' }}">Sign up</a>
+      </div>
+      {% if mode == 'login' %}
+      <form method="post" action="{{ url_for('login') }}">
+        <label class="field">Role
+          <select name="role">
+            <option value="teacher">Teacher</option>
+            <option value="staff">School staff</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </label>
+        <label class="field">Email<input type="email" name="email" autocomplete="email" required></label>
+        <label class="field">Password<input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn block" type="submit">Log in</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('register') }}">
+        <label class="field">Role
+          <select name="role">
+            <option value="teacher">Teacher</option>
+            <option value="staff">School staff</option>
+          </select>
+        </label>
+        <label class="field">ID number<input name="employee_no" autocomplete="off" required></label>
+        <div class="row2">
+          <label class="field">First name<input name="first_name" autocomplete="given-name" required></label>
+          <label class="field">Last name<input name="last_name" autocomplete="family-name" required></label>
+        </div>
+        <label class="field">Email<input type="email" name="email" autocomplete="email" required></label>
+        <label class="field">Password<input type="password" name="password" autocomplete="new-password" minlength="8" required><span class="hint">At least 8 characters. Staff accounts wait for administrator approval.</span></label>
+        <button class="btn block" type="submit">Create account</button>
+      </form>
+      {% endif %}
+      {% if demo and mode == 'login' %}
+      <details class="demo">
+        <summary>Demo accounts</summary>
+        <div class="btn-row">
+          {% for account in demo %}
+          <form method="post" action="{{ url_for('demo_login', role=account.role) }}"><button class="btn ghost sm" type="submit">Sign in as {{ account.role }}</button></form>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}

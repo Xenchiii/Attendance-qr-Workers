@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block title %}Profile{% endblock %}
+{% block crumb %}Profile{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Profile</h1><p class="sub">Your account details, password and appearance.</p></div>
+</div>
+<div class="grid2">
+  <section class="card">
+    <div class="profile-head">
+      <span class="avatar lg">{{ initials }}</span>
+      <div><h2>{{ g.user.first_name }} {{ g.user.last_name }}</h2><span class="badge">{{ g.user.role }}</span></div>
+    </div>
+    <dl class="kv">
+      <dt>Email</dt><dd>{{ g.user.email }}</dd>
+      <dt>ID number</dt><dd>{{ employee_no }}</dd>
+      <dt>Member since</dt><dd>{{ joined }}</dd>
+      <dt>Previous login</dt><dd>{{ last_login }}</dd>
+    </dl>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Your name</h2></div>
+    <form method="post" action="{{ url_for('profile_update') }}">
+      <div class="row2">
+        <label class="field">First name<input name="first_name" value="{{ g.user.first_name }}" required></label>
+        <label class="field">Last name<input name="last_name" value="{{ g.user.last_name }}" required></label>
+      </div>
+      <button class="btn" type="submit">Save name</button>
+    </form>
+  </section>
+</div>
+<div class="grid2">
+  <section class="card">
+    <div class="card-head"><h2>Change password</h2></div>
+    <form method="post" action="{{ url_for('profile_password') }}">
+      <label class="field">Current password<input type="password" name="current" autocomplete="current-password" required></label>
+      <label class="field">New password<input type="password" name="new" autocomplete="new-password" minlength="8" required><span class="hint">At least 8 characters.</span></label>
+      <label class="field">Confirm new password<input type="password" name="confirm" autocomplete="new-password" minlength="8" required></label>
+      <button class="btn" type="submit">Change password</button>
+    </form>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Appearance</h2></div>
+    <p class="sub" style="margin-bottom:1rem">Auto follows your device setting.</p>
+    <form method="post" action="{{ url_for('theme') }}" class="seg">
+      <input type="hidden" name="next" value="{{ url_for('profile') }}">
+      {% for key, label in (('system', 'Auto'), ('light', 'Light'), ('dark', 'Dark')) %}
+      <button type="submit" name="mode" value="{{ key }}" class="{{ 'on' if theme == key }}">{{ label }}</button>
+      {% endfor %}
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import paginator, sorth, confirm, badge with context %}
+{% block title %}Users{% endblock %}
+{% block crumb %}Users{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>User accounts</h1><p class="sub">Approve sign-ups, suspend accounts, reset passwords and add people directly.</p></div>
+  <div class="btn-row"><button class="btn" type="button" popovertarget="new-user">New user</button></div>
+</div>
+<div id="new-user" popover class="panel" style="width:min(560px,calc(100vw - 2rem))">
+  <h3>Add a user</h3>
+  <p>The account is active straight away, with no approval step.</p>
+  <form method="post" action="{{ url_for('admin_user_create') }}">
+    <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+    <div class="form-grid">
+      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="staff">School staff</option></select></label>
+      <label class="field">ID number<input name="employee_no" required></label>
+      <label class="field">First name<input name="first_name" required></label>
+      <label class="field">Last name<input name="last_name" required></label>
+      <label class="field wide">Email<input type="email" name="email" required></label>
+      <label class="field wide">Temporary password<input type="text" name="password" minlength="8" autocomplete="off" required><span class="hint">At least 8 characters. Share it with the person and ask them to change it from Profile.</span></label>
+    </div>
+    <div class="btn-row"><button class="btn" type="submit">Create account</button><button class="btn ghost" type="button" popovertarget="new-user" popovertargetaction="hide">Cancel</button></div>
+  </form>
+</div>
+<section class="card">
+  <form method="get" class="filters no-print">
+    <input type="hidden" name="sort" value="{{ f.sort }}"><input type="hidden" name="dir" value="{{ f.dir }}">
+    <label class="field grow">Search<input name="q" value="{{ f.q }}" placeholder="Name, email or ID number"></label>
+    <label class="field">Role<select name="role"><option value="">All roles</option><option value="teacher" {{ 'selected' if f.role == 'teacher' }}>Teachers</option><option value="staff" {{ 'selected' if f.role == 'staff' }}>Staff</option></select></label>
+    <label class="field">Status
+      <select name="status">
+        <option value="">All statuses</option>
+        {% for s in ('ACTIVE', 'INACTIVE', 'SUSPENDED') %}<option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ 'Pending' if s == 'INACTIVE' else s|pretty|capitalize }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="btn-row"><button class="btn" type="submit">Apply</button><a class="btn ghost" href="{{ url_for('admin_users') }}">Reset</a></div>
+  </form>
+  {% if users %}
+  <div class="table-wrap"><table>
+    <thead><tr>{{ sorth('Name', 'name', f) }}{{ sorth('ID number', 'id', f) }}{{ sorth('Role', 'role', f) }}{{ sorth('Status', 'status', f) }}<th>Last login</th><th class="no-print">Actions</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    {% set next = {'ACTIVE': ('SUSPENDED', 'Suspend', 'warn'), 'INACTIVE': ('ACTIVE', 'Approve', 'ok'), 'SUSPENDED': ('ACTIVE', 'Reactivate', 'ok')}[u.status] %}
+    <tr>
+      <td><div class="cell-user"><span class="avatar">{{ u.initials }}</span><div>{{ u.full_name }}<small>{{ u.email }}</small></div></div></td>
+      <td>{{ u.employee_no }}</td>
+      <td><span class="badge">{{ u.role }}</span></td>
+      <td>{{ badge(u.status) }}</td>
+      <td>{{ u.last_login_text }}</td>
+      <td class="no-print"><div class="btn-row">
+        <form method="post" action="{{ url_for('admin_status', user_id=u.id) }}" class="inline"><input type="hidden" name="status" value="{{ next[0] }}"><input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}"><button class="btn sm {{ next[2] }}" type="submit">{{ next[1] }}</button></form>
+        {{ confirm('reset-' ~ u.id, 'Reset password', 'Reset this password?', u.full_name ~ ' will be signed out everywhere and given a new temporary password, shown once.', url_for('admin_reset', user_id=u.id), 'Reset password', 'warn', {}) }}
+        {% if u.refs %}<button class="btn ghost sm" type="button" disabled title="Has attendance history. Suspend instead.">Delete</button>
+        {% else %}{{ confirm('delete-' ~ u.id, 'Delete', 'Delete this account?', u.full_name ~ ' has no attendance history, so the account will be removed permanently.', url_for('admin_delete', user_id=u.id), 'Delete account', 'danger', {}) }}{% endif %}
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="empty"><b>No accounts match</b>Try a different search or clear the filters.</div>{% endif %}
+  {{ paginator(pager, 'accounts') }}
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block body %}
+<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true" tabindex="-1">
+<div class="shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="side-brand">
+      <a class="brand" href="{{ url_for(g.user.role) }}"><img class="logo" src="{{ url_for('static', filename='img/logo-mark-128.png') }}" alt="">QR Attendance</a>
+    </div>
+    <div>
+      <div class="nav-title">{{ g.user.role|capitalize }} menu</div>
+      <nav class="nav">
+        {% for item in nav %}
+        <a href="{{ url_for(item.endpoint) }}" {% if item.active %}aria-current="page"{% endif %}>{{ item.label }}{% if item.endpoint == 'admin_users' and pending_count %}<span class="count">{{ pending_count }}</span>{% endif %}</a>
+        {% endfor %}
+      </nav>
+    </div>
+    <div class="side-foot">
+      <div class="side-user">
+        <span class="avatar">{{ initials }}</span>
+        <div><b>{{ g.user.first_name }} {{ g.user.last_name }}</b><small>{{ g.user.role }}</small></div>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}"><button class="btn ghost block" type="submit">Log out</button></form>
+    </div>
+  </aside>
+  <label for="nav-toggle" class="scrim"></label>
+  <div class="main">
+    <header class="top">
+      <div class="top-left">
+        <label for="nav-toggle" class="burger" aria-label="Open menu"><span></span><span></span><span></span></label>
+        <div class="crumbs">QR Attendance / <b>{% block crumb %}{% endblock %}</b></div>
+      </div>
+      <div class="top-right">
+        <span class="clock">{{ today_text }}</span>
+        <form method="post" action="{{ url_for('theme') }}">
+          <input type="hidden" name="mode" value="cycle">
+          <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+          <button class="theme-btn" type="submit" title="Switch theme">Theme: {{ 'Auto' if theme == 'system' else theme|capitalize }}</button>
+        </form>
+        <button class="userchip" type="button" popovertarget="usermenu"><span class="avatar">{{ initials }}</span><span class="nm">{{ g.user.first_name }}</span></button>
+      </div>
+      <div id="usermenu" popover class="menu">
+        <div class="who-line"><b>{{ g.user.first_name }} {{ g.user.last_name }}</b>{{ g.user.email }}</div>
+        <a href="{{ url_for('profile') }}">Profile and password</a>
+        <hr>
+        <form method="post" action="{{ url_for('logout') }}"><button type="submit">Log out</button></form>
+      </div>
+    </header>
+    <main id="main" class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

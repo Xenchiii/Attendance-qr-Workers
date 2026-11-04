@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import confirm, badge with context %}
+{% block title %}Rooms{% endblock %}
+{% block crumb %}Rooms{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Rooms and facilities</h1><p class="sub">Add rooms, rename them, and take them out of service for maintenance.</p></div>
+</div>
+<section class="card">
+  <div class="card-head"><h2>Add a room</h2></div>
+  <form method="post" action="{{ url_for('admin_room_add') }}">
+    <div class="form-grid">
+      <label class="field">Code<input name="code" placeholder="RM-201" required></label>
+      <label class="field">Room name<input name="name" required></label>
+      <label class="field">Building<input name="building" required></label>
+      <label class="field">Floor<input name="floor"></label>
+      <label class="field">Capacity<input name="capacity" type="number" min="0"></label>
+    </div>
+    <button class="btn" type="submit">Add room</button>
+  </form>
+</section>
+<section class="card">
+  <div class="card-head"><h2>All rooms</h2><span class="hint">{{ rooms|length }} total</span></div>
+  {% if rooms %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Code</th><th>Room</th><th>Building</th><th>Floor</th><th class="num">Capacity</th><th class="num">Uses</th><th>Status</th><th class="no-print">Actions</th></tr></thead>
+    <tbody>
+    {% for r in rooms %}
+    <tr>
+      <td>{{ r.code }}</td>
+      <td>{{ r.name }}{% if r.occupant %}<small class="hint" style="display:block">In use by {{ r.occupant }}</small>{% endif %}</td>
+      <td>{{ r.building }}</td><td>{{ r.floor or '-' }}</td><td class="num">{{ r.capacity }}</td><td class="num">{{ r.uses }}</td>
+      <td>{{ badge(r.status) }}</td>
+      <td class="no-print"><div class="btn-row">
+        <button class="btn ghost sm" type="button" popovertarget="edit-{{ r.id }}">Edit</button>
+        {% if r.refs or r.status == 'OCCUPIED' %}<button class="btn ghost sm" type="button" disabled title="Has attendance history. Set it to inactive instead.">Delete</button>
+        {% else %}{{ confirm('delete-' ~ r.id, 'Delete', 'Delete this room?', r.name ~ ' has never been used, so it will be removed permanently.', url_for('admin_room_delete', room_id=r.id), 'Delete room', 'danger', {}) }}{% endif %}
+      </div>
+      <div id="edit-{{ r.id }}" popover class="panel" style="width:min(560px,calc(100vw - 2rem))">
+        <h3>Edit {{ r.code }}</h3>
+        <p>{% if r.status == 'OCCUPIED' %}This room is in use, so its status cannot change until the class ends.{% else %}Set the status to maintenance or inactive to hide the room from teachers.{% endif %}</p>
+        <form method="post" action="{{ url_for('admin_room_update', room_id=r.id) }}">
+          <div class="form-grid">
+            <label class="field">Room name<input name="name" value="{{ r.name }}" required></label>
+            <label class="field">Building<input name="building" value="{{ r.building }}" required></label>
+            <label class="field">Floor<input name="floor" value="{{ r.floor }}"></label>
+            <label class="field">Capacity<input name="capacity" type="number" min="0" value="{{ r.capacity }}"></label>
+            <label class="field wide">Status
+              <select name="status" {% if r.status == 'OCCUPIED' %}disabled{% endif %}>
+                {% for s in ('AVAILABLE', 'MAINTENANCE', 'INACTIVE') %}<option value="{{ s }}" {{ 'selected' if r.status == s }}>{{ s|pretty|capitalize }}</option>{% endfor %}
+                {% if r.status == 'OCCUPIED' %}<option selected>Occupied</option>{% endif %}
+              </select>
+            </label>
+          </div>
+          <div class="btn-row"><button class="btn" type="submit">Save changes</button><button class="btn ghost" type="button" popovertarget="edit-{{ r.id }}" popovertargetaction="hide">Cancel</button></div>
+        </form>
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="empty"><b>No rooms yet</b>Add the first room above.</div>{% endif %}
+</section>
+{% endblock %}

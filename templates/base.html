@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}QR Attendance{% endblock %} - QR Attendance</title>
+<meta name="theme-color" content="#11305c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body class="enter">
+<a class="skip" href="#main">Skip to content</a>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flashes" role="status">
+  {% for category, message in messages %}
+  <div class="flash {{ 'ok' if category in ('ok', 'sticky') }} {{ 'sticky' if category == 'sticky' }}">
+    <b>{{ 'Done' if category in ('ok', 'sticky') else 'Heads up' }}</b>
+    {% if category == 'sticky' %}{{ message.rsplit(': ', 1)[0] }}: <code>{{ message.rsplit(': ', 1)[1] }}</code>{% else %}{{ message }}{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+{% block body %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import history_table, confirm with context %}
+{% block title %}Dashboard{% endblock %}
+{% block crumb %}Dashboard{% endblock %}
+{% block head %}{% if qr or current %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Hello, {{ g.user.first_name }}</h1><p class="sub">Pick a room, generate a QR code, and show it to staff to time in.</p></div>
+</div>
+<div class="stats">
+  <div class="card stat"><div><strong>{{ summary.week_classes }}</strong><span>Classes this week</span></div></div>
+  <div class="card stat"><div><strong>{{ summary.week_time }}</strong><span>Teaching time this week</span></div></div>
+  <div class="card stat"><div><strong>{{ summary.average }}</strong><span>Average class length</span></div></div>
+  <div class="card stat"><div><strong>{{ summary.all_classes }}</strong><span>All-time classes</span></div></div>
+</div>
+<div class="cols">
+  <section class="card">
+    {% if current %}
+    <h2 class="live">Currently in class</h2>
+    <div class="live-card">
+      <div><span class="sub">Room</span><div class="big" style="font-size:1.3rem">{{ current.room_name }}</div></div>
+      <div><span class="sub">Time in</span><div><b>{{ current.time_in_text }}</b></div></div>
+      <div><span class="sub">Elapsed</span><div class="big">{{ current.elapsed_text }}</div></div>
+      <div class="bar fill" style="--w:{{ [current.elapsed_minutes / 90 * 100, 100]|min|round|int }}%"><i></i></div>
+      <span class="hint">Bar fills over a 90 minute class. This page refreshes every 30 seconds.</span>
+      {{ confirm('timeout', 'Time out', 'End this class?', 'Your Time Out is recorded now and ' ~ current.room_name ~ ' becomes available for others.', url_for('teacher_timeout'), 'Time out now', 'warn', {}) }}
+    </div>
+    {% else %}
+    <h2>Generate QR code</h2>
+    <form method="post" action="{{ url_for('teacher_qr') }}">
+      <label class="field">Room or facility
+        <select name="room_id" required>
+          {% for r in rooms %}<option value="{{ r.id }}">{{ r.name }} - {{ r.building }}</option>{% else %}<option value="">No rooms available</option>{% endfor %}
+        </select>
+      </label>
+      <button class="btn block" type="submit" {% if not rooms %}disabled{% endif %}>Generate QR code</button>
+    </form>
+    {% if qr %}
+    <div class="qr-box">
+      <div class="qr"><img src="{{ qr.image }}" alt="Attendance QR code"></div>
+      <div class="bar"><i style="animation-delay:-{{ 300 - qr.seconds }}s"></i></div>
+      <div class="timer">Expires in {{ qr.seconds // 60 }}:{{ '%02d' % (qr.seconds % 60) }}</div>
+      <div class="code">{{ qr.token }}</div>
+      <p class="sub">Staff scan this code to record your Time In.</p>
+      <form method="post" action="{{ url_for('teacher_qr_cancel') }}"><button class="btn ghost sm" type="submit">Cancel code</button></form>
+    </div>
+    {% endif %}
+    {% endif %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Recent attendance</h2><a class="btn ghost sm" href="{{ url_for('history') }}">View all</a></div>
+    {% set f = {'sort': 'time', 'dir': 'desc'} %}
+    {{ history_table(recent, f, false, false) }}
+  </section>
+</div>
+{% endblock %}

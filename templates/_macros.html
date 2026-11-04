@@ -1,0 +1,60 @@
+{% macro badge(status) %}<span class="badge {{ status }}">{{ status|pretty }}</span>{% endmacro %}
+
+{% macro paginator(p, noun) %}
+<div class="pager">
+  <div>{% if p.total %}Showing {{ p.first }} to {{ p.last }} of {{ p.total }} {{ noun }}{% else %}No {{ noun }}{% endif %}</div>
+  {% if p.pages > 1 %}
+  <nav class="pages" aria-label="Pagination">
+    {% if p.prev %}<a href="{{ here(page=p.prev) }}">Prev</a>{% else %}<span class="off">Prev</span>{% endif %}
+    {% for n in p.window %}
+      {% if n is none %}<span class="gap">...</span>
+      {% elif n == p.page %}<span class="cur" aria-current="page">{{ n }}</span>
+      {% else %}<a href="{{ here(page=n) }}">{{ n }}</a>{% endif %}
+    {% endfor %}
+    {% if p.next %}<a href="{{ here(page=p.next) }}">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+  </nav>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro sorth(label, key, f, cls) %}
+<th class="{{ cls }}"><a class="sort {{ f.dir if f.sort == key }}" href="{{ here(sort=key, dir=('desc' if f.sort == key and f.dir == 'asc' else 'asc'), page=None) }}">{{ label }}</a></th>
+{% endmacro %}
+
+{% macro confirm(id, label, title, text, action, button, kind, fields) %}
+<button type="button" class="btn {{ kind }} sm" popovertarget="{{ id }}">{{ label }}</button>
+<div id="{{ id }}" popover class="panel">
+  <h3>{{ title }}</h3>
+  <p>{{ text }}</p>
+  <form method="post" action="{{ action }}">
+    {% for key, value in (fields or {}).items() %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+    <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+    <div class="btn-row"><button class="btn {{ kind }}" type="submit">{{ button }}</button><button class="btn ghost" type="button" popovertarget="{{ id }}" popovertargetaction="hide">Cancel</button></div>
+  </form>
+</div>
+{% endmacro %}
+
+{% macro history_table(rows, f, show_teacher, can_close) %}
+{% if not rows %}
+<div class="empty"><b>No attendance records</b>Nothing matches yet. Try widening the filters.</div>
+{% else %}
+<div class="table-wrap"><table>
+  <thead><tr>
+    {% if show_teacher %}{{ sorth('Teacher', 'teacher', f) }}{% endif %}
+    {{ sorth('Room', 'room', f) }}{{ sorth('Time in', 'time', f) }}<th>Time out</th>{{ sorth('Duration', 'duration', f) }}{{ sorth('Status', 'status', f) }}
+    {% if can_close %}<th class="no-print"></th>{% endif %}
+  </tr></thead>
+  <tbody>
+  {% for a in rows %}
+  <tr>
+    {% if show_teacher %}<td>{{ a.teacher_name }}</td>{% endif %}
+    <td>{{ a.room_name }}</td><td>{{ a.time_in_text }}</td><td>{{ a.time_out_text }}</td>
+    <td>{% if a.status == 'ACTIVE' %}{{ a.elapsed_text }} so far{% else %}{{ a.duration_text }}{% endif %}</td>
+    <td>{{ badge(a.status) }}</td>
+    {% if can_close %}<td class="no-print">{% if a.status == 'ACTIVE' %}{{ confirm('close-' ~ a.id, 'Close', 'Close this record?', a.teacher_name ~ ' will be marked incomplete and ' ~ a.room_name ~ ' becomes available again.', url_for('admin_close', attendance_id=a.id), 'Close record', 'warn', {}) }}{% endif %}</td>{% endif %}
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% from "_macros.html" import history_table, paginator with context %}
+{% block title %}{{ title }}{% endblock %}
+{% block crumb %}{{ title }}{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>{{ title }}</h1><p class="sub">Search, sort and export attendance. Times are shown in {{ tz_name }}. Use your browser's print command for a paper copy.</p></div>
+  <div class="btn-row no-print"><a class="btn ghost" href="{{ url_for('report', **request.args) }}">Download CSV</a></div>
+</div>
+<section class="card">
+  <div class="chips no-print">
+    <a class="chip {{ 'on' if not f.start and not f.end }}" href="{{ here(start=None, end=None, page=None) }}">All time</a>
+    {% for p in presets %}<a class="chip {{ 'on' if p.on }}" href="{{ here(start=p.start, end=p.end, page=None) }}">{{ p.label }}</a>{% endfor %}
+  </div>
+  <form method="get" class="filters no-print">
+    <input type="hidden" name="sort" value="{{ f.sort }}"><input type="hidden" name="dir" value="{{ f.dir }}">
+    <label class="field grow">Search<input name="q" value="{{ f.q }}" placeholder="Teacher or room"></label>
+    <label class="field">Status
+      <select name="status">
+        <option value="">All statuses</option>
+        {% for s in ('ACTIVE', 'COMPLETED', 'INCOMPLETE') %}<option value="{{ s }}" {{ 'selected' if f.status == s }}>{{ s|pretty|capitalize }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field">Room
+      <select name="room">
+        <option value="">All rooms</option>
+        {% for r in rooms %}<option value="{{ r.id }}" {{ 'selected' if f.room == r.id|string }}>{{ r.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field">From<input type="date" name="start" value="{{ f.start }}"></label>
+    <label class="field">To<input type="date" name="end" value="{{ f.end }}"></label>
+    <div class="btn-row"><button class="btn" type="submit">Apply</button><a class="btn ghost" href="{{ url_for(request.endpoint) }}">Reset</a></div>
+  </form>
+  {{ history_table(rows, f, show_teacher, can_close) }}
+  {{ paginator(pager, 'records') }}
+</section>
+{% endblock %}

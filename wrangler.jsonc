@@ -1,0 +1,25 @@
+{
+	"name": "qr-attendance",
+	"main": "src/entry.py",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": [
+		"python_workers"
+	],
+	"assets": {
+		"directory": "./public"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "qr-attendance",
+			"database_id": "0bb7955d-93f9-43a4-b2b0-11454176bf5a"
+		}
+	],
+	"vars": {
+		"TZ_OFFSET_HOURS": "8",
+		"DEMO_LOGIN": "false"
+	},
+	"observability": {
+		"enabled": true
+	}
+}
